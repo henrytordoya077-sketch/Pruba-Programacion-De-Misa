@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saffiro - Facturación, Ventas y Digitalización de Misas | Kantutani</title>
+
+  <!-- PWA Web App Manifest (Data URI) -->
+  <link rel="manifest" href="data:application/manifest+json;utf8,%7B%22short_name%22%3A%22Saffiro%22%2C%22name%22%3A%22Saffiro%20-%20Sistema%20Inmobiliaria%20Kantutani%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F2921%2F2921222.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%2C%22start_url%22%3A%22.%22%2C%22background_color%22%3A%22%23059669%22%2C%22theme_color%22%3A%22%23059669%22%2C%22display%22%3A%22standalone%22%7D">
+  <meta name="theme-color" content="#059669">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Saffiro">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts Inter -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            saffiro: {
+              green: '#10b981',
+              darkgreen: '#059669',
+              brand: '#00a859',
+              lightbg: '#f3f4f6',
+              sidebar: '#ffffff',
+              header: '#f8fafc',
+              border: '#e5e7eb',
+              btnGreen: '#22c55e',
+              purple: '#d946ef',
+              blue: '#4f46e5'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+      color: #334155;
+      user-select: none;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printableTicket, #printableTicket * {
+        visibility: visible;
+      }
+      #printableTicket {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col bg-gray-100 text-xs">
+
+  <!-- TOP MAIN NAVBAR -->
+  <header class="bg-white border-b border-gray-200 h-12 flex items-center justify-between px-3 md:px-4 z-20 shrink-0">
+    <!-- Left Logo & System Name -->
+    <div class="flex items-center space-x-2 md:space-x-3">
+      <div onclick="showNotification('Saffiro App', 'Sistema activo y sincronizado.')" class="flex items-center space-x-1.5 cursor-pointer group">
+        <div class="w-7 h-7 bg-emerald-600 text-white font-black text-xl flex items-center justify-center rounded-md tracking-tighter group-hover:bg-emerald-700 transition">
+          S
+        </div>
+        <span class="font-bold text-xs tracking-wider text-emerald-700 hidden sm:inline">SAFFIRO</span>
+      </div>
+      <div class="h-4 w-px bg-gray-300 mx-1"></div>
+      <div class="flex flex-col">
+        <span class="font-bold text-xs md:text-sm text-gray-800 leading-none">Facturación y Ventas</span>
+      </div>
+
+      <!-- Horizontal Navigation Tabs -->
+      <nav class="hidden lg:flex items-center space-x-4 ml-6 text-xs text-gray-500">
+        <button onclick="openModal('navModal', 'Dashboard', 'Estadísticas de facturación diaria, recaudación por sucursal y proyección de ingresos.')" class="hover:text-emerald-600 transition-colors">Dashboard</button>
+        <button onclick="openModal('navModal', 'Reportes', 'Módulo de reportes de auditoría, cierres de caja y arqueos diarios.')" class="hover:text-emerald-600 transition-colors">Reportes</button>
+        <div class="relative group">
+          <button onclick="openModal('navModal', 'Gestión de Cajas', 'Apertura, cierre de caja, giros pendientes y transferencias entre cuentas.')" class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-medium flex items-center gap-1 border border-emerald-200 hover:bg-emerald-100 transition">
+            Gestión de cajas <i class="fa-solid fa-chevron-down text-[10px]"></i>
+          </button>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Right Header Tools -->
+    <div class="flex items-center space-x-3 md:space-x-4 text-gray-500">
+      <!-- PWA Install Button -->
+      <button id="pwaInstallBtn" onclick="installPWA()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1 shadow transition">
+        <i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Instalar App</span>
+      </button>
+
+      <button onclick="openSearchClientModal()" title="Buscar Cliente (Ctrl+F)" class="hover:text-gray-700 p-1"><i class="fa-solid fa-magnifying-glass"></i></button>
+      <button onclick="toggleFullscreen()" title="Pantalla Completa" class="hover:text-gray-700 p-1 hidden sm:block"><i class="fa-solid fa-expand"></i></button>
+      <button onclick="openModal('navModal', 'Configuración', 'Parámetros de dosificación, impresoras de tickets y facturación en línea Siat.')" title="Configuración" class="hover:text-gray-700 p-1"><i class="fa-solid fa-gear"></i></button>
+      
+      <div class="relative cursor-pointer" onclick="openModal('navModal', 'Notificaciones', 'No tienes notificaciones pendientes.')">
+        <i class="fa-solid fa-bell"></i>
+        <span class="absolute -top-1 -right-1.5 bg-emerald-500 text-white text-[9px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">0</span>
+      </div>
+
+      <div class="flex items-center space-x-2 border-l border-gray-200 pl-2 md:pl-3">
+        <div class="w-7 h-7 rounded-full bg-emerald-700 text-white font-bold flex items-center justify-center border border-gray-300 text-xs">
+          HT
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- SYSTEM INFO / SESSION BAR -->
+  <div class="bg-gray-50 border-b border-gray-200 px-3 md:px-4 py-1.5 flex flex-wrap items-center justify-between gap-y-1 text-gray-600 text-[11px] shrink-0">
+    <div class="flex items-center space-x-3 md:space-x-6 flex-wrap gap-y-1">
+      <div class="flex items-center space-x-1.5">
+        <i class="fa-solid fa-desktop text-gray-400"></i>
+        <span class="text-gray-400 hidden sm:inline">Caja:</span>
+        <span class="font-bold text-gray-800">MILP08L</span>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <i class="fa-regular fa-user text-gray-400"></i>
+        <span class="text-gray-400 hidden sm:inline">Cajero:</span>
+        <span class="font-bold text-gray-800 uppercase truncate max-w-[140px] sm:max-w-none">HENRY LEONARDO TORDOYA</span>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <i class="fa-solid fa-location-dot text-gray-400"></i>
+        <span class="text-gray-400 hidden md:inline">Sucursal:</span>
+        <span class="font-bold text-gray-800">4 – FUNERARIA SANTA MARIA</span>
+      </div>
+      <div class="flex items-center space-x-1.5 hidden lg:flex">
+        <i class="fa-solid fa-circle-exclamation text-amber-500"></i>
+        <span class="text-gray-400">Tipo:</span>
+        <span class="font-bold text-gray-800">CAJA CENTRAL</span>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-3 md:space-x-5 text-[10px] md:text-[11px]">
+      <div class="flex items-center space-x-1">
+        <i class="fa-regular fa-id-card text-gray-400"></i>
+        <span class="text-gray-400 hidden sm:inline">Dosificación:</span>
+        <span class="font-bold text-gray-800">12124</span>
+      </div>
+      <div class="flex items-center space-x-1">
+        <i class="fa-solid fa-coins text-gray-400"></i>
+        <span class="text-gray-400">$us:</span>
+        <span class="font-bold text-gray-800">6.96</span>
+      </div>
+      <div class="flex items-center space-x-1">
+        <i class="fa-regular fa-calendar text-gray-400"></i>
+        <span class="font-bold text-gray-800" id="currentDateStr">24/10/2026</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN BODY LAYOUT (Sidebar + Main Content) -->
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- LEFT SIDEBAR MENU -->
+    <aside class="w-12 md:w-48 bg-white border-r border-gray-200 flex flex-col justify-between shrink-0 overflow-y-auto">
+      <div class="py-2">
+        <ul class="space-y-0.5 text-gray-600 text-xs" id="sidebarMenuList">
+          <!-- Dinamically generated options -->
+        </ul>
+      </div>
+      <div class="p-2 md:p-3 border-t border-gray-100 text-center">
+        <span class="text-[9px] md:text-[10px] text-gray-400 font-medium block">Saffiro v2.4</span>
+        <span class="text-[8px] text-emerald-600 font-bold hidden md:block">Kantutani Digital</span>
+      </div>
+    </aside>
+
+    <!-- RIGHT MAIN WORKSPACE -->
+    <main class="flex-1 overflow-y-auto p-2 md:p-4 flex flex-col justify-between gap-3 md:gap-4">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4">
+
+        <!-- LEFT WORKSPACE AREA (Client Search, Contracts, Items) -->
+        <div class="lg:col-span-8 flex flex-col space-y-3 md:space-y-4">
+          
+          <!-- CLIENT SEARCH CARD -->
+          <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm relative">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 mb-2">
+              <div class="flex items-center space-x-2 flex-1">
+                <label class="font-semibold text-gray-700 whitespace-nowrap text-xs">Cliente</label>
+                <div class="relative flex-1">
+                  <input type="text" id="clientCodeInput" value="2430217LP" class="w-full bg-white border border-gray-300 rounded px-2.5 py-1 text-xs text-gray-800 focus:outline-none focus:border-emerald-500 font-mono uppercase font-bold" onkeydown="if(event.key==='Enter') executeClientSearch()">
+                  <button onclick="executeClientSearch()" class="absolute right-0 top-0 bottom-0 px-2.5 bg-gray-100 hover:bg-gray-200 border-l border-gray-300 rounded-r text-gray-600 transition" title="Buscar cliente">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                  </button>
+                </div>
+                <button onclick="openSearchClientModal()" class="bg-slate-100 hover:bg-slate-200 border border-gray-300 text-gray-700 px-2 py-1 rounded text-xs transition" title="Directorio de clientes">
+                  <i class="fa-solid fa-list-ul"></i>
+                </button>
+              </div>
+              <button onclick="showClientInfoModal()" class="bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 px-3 py-1 rounded text-xs font-semibold flex items-center justify-center space-x-1.5 transition">
+                <i class="fa-regular fa-user"></i>
+                <span>Información del cliente</span>
+              </button>
+            </div>
+
+            <div id="clientNameDisplay" class="bg-gray-50 rounded p-2 text-xs font-bold text-gray-800 uppercase border border-gray-200 tracking-wide flex justify-between items-center">
+              <span>ROSA CHOQUE VELA</span>
+              <span class="text-[10px] text-gray-500 font-normal">CI: 4839201 LP</span>
+            </div>
+
+            <!-- DIGITAL NOTICE BANNER -->
+            <div class="mt-2 bg-amber-50 border border-amber-200 text-amber-800 rounded px-3 py-1.5 text-[11px] flex flex-wrap items-center justify-between gap-1">
+              <div>
+                <i class="fa-solid fa-circle-info mr-1.5 text-amber-600"></i>
+                <span class="font-medium">COMPROBANTE DE VENTA DIGITAL POR EL ASESOR : <strong id="asesorCodeDisplay">202494</strong></span>
+              </div>
+              <span class="bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-bold text-[10px]">DIGITAL</span>
+            </div>
+          </div>
+
+          <!-- CONTRACT & PRODUCTS TABLE -->
+          <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div class="p-2.5 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+              <span class="font-bold text-gray-700 text-xs uppercase tracking-wide">Contratos y Servicios Asignados</span>
+              <span class="text-[11px] text-gray-500" id="itemCountDisplay">1 item activo</span>
+            </div>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs min-w-[600px]">
+                <thead class="bg-gray-100 border-b border-gray-200 text-gray-600 font-semibold uppercase text-[10px]">
+                  <tr>
+                    <th class="p-2 w-8 text-center">
+                      <input type="checkbox" id="selectAllItems" checked onchange="toggleSelectAllItems(this)" class="accent-emerald-600 cursor-pointer">
+                    </th>
+                    <th class="p-2">Item / Concepto</th>
+                    <th class="p-2">Contrato</th>
+                    <th class="p-2 text-center">Cuotas</th>
+                    <th class="p-2 text-right">Total Bs.</th>
+                    <th class="p-2 text-right">Total US$</th>
+                    <th class="p-2 text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-gray-700" id="contractsTableBody">
+                  <!-- Row 1: Main Contract -->
+                  <tr class="hover:bg-gray-50/80 transition" id="row-contract-1">
+                    <td class="p-2 text-center">
+                      <input type="checkbox" checked onchange="recalculateTotals()" class="item-checkbox accent-emerald-600 cursor-pointer" data-price-bs="720.36">
+                    </td>
+                    <td class="p-2 font-medium text-emerald-800">
+                      TIT - PAGO DE CONTRATO - PRODUCTO ALMIX - HUAYNAPOTOSI E-039
+                    </td>
+                    <td class="p-2 font-mono font-semibold">222511562</td>
+                    <td class="p-2 text-center">
+                      <input type="number" min="1" max="60" value="1" onchange="updateRowCuotas(this)" class="w-12 border border-gray-300 rounded text-center py-0.5 text-xs font-bold">
+                    </td>
+                    <td class="p-2 text-right font-bold text-gray-800 font-mono row-total-bs">720.36</td>
+                    <td class="p-2 text-right font-mono text-gray-600 row-total-usd">103.50</td>
+                    <td class="p-2 text-center space-x-1 text-gray-500">
+                      <button onclick="openModal('navModal', 'Detalles del Contrato 222511562', 'Producto: ALMIX Huaynapotosí E-039. Plan 36 meses. Estado: Al día.')" class="hover:text-emerald-600 p-1" title="Ver detalles"><i class="fa-solid fa-gear"></i></button>
+                      <button onclick="openModal('navModal', 'Extracto de Cuenta', 'Generando extracto oficial de pagos realizados y cuotas pendientes...')" class="hover:text-emerald-600 p-1" title="Extracto de cuotas"><i class="fa-regular fa-file-lines"></i></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="p-2 bg-gray-50 border-t border-gray-100 text-gray-500 text-[11px] flex justify-between items-center">
+              <span>Seleccionado para cobro</span>
+              <button onclick="openAddContractModal()" class="text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-plus text-[10px]"></i> Vincular otro contrato
+              </button>
+            </div>
+          </div>
+
+          <!-- DETALLE DE CONCEPTOS ADICIONALES Y MISA (DIGITALIZACIÓN) -->
+          <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-3">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
+              <span class="font-bold text-gray-700 uppercase tracking-wide text-[11px]">Conceptos / Servicios Adicionales en Caja</span>
+              <div class="flex items-center space-x-2">
+                <button onclick="openModal('navModal', 'Información de Facturación', 'Dosificación SIAT activa. NIT: 1020304050. Tipo de emisión: En línea.')" class="bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 px-2.5 py-1 rounded text-xs font-semibold flex items-center space-x-1 transition">
+                  <i class="fa-regular fa-file-lines"></i>
+                  <span>Info Factura</span>
+                </button>
+                <button onclick="openAddProductModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-xs font-semibold flex items-center space-x-1 transition shadow-sm">
+                  <i class="fa-solid fa-plus"></i>
+                  <span>Adicionar producto</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- TABLE OF EXTRA SERVICES (MISAS) -->
+            <div class="overflow-x-auto border border-gray-200 rounded">
+              <table class="w-full text-xs min-w-[600px]">
+                <thead class="bg-gray-50 text-gray-500 text-[10px] uppercase border-b border-gray-200">
+                  <tr>
+                    <th class="p-2 text-left">Descripción del Servicio</th>
+                    <th class="p-2 text-center">Descuento</th>
+                    <th class="p-2 text-center">Cant.</th>
+                    <th class="p-2 text-right">Precio unitario</th>
+                    <th class="p-2 text-right">Subtotal Bs.</th>
+                    <th class="p-2 text-center">Moneda</th>
+                    <th class="p-2 text-center">Estado Misa</th>
+                    <th class="p-2 text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100" id="extraServicesTableBody">
+                  <tr class="bg-emerald-50/40" id="misaRowItem" data-tiene-ramo="false">
+                    <td class="p-2 font-semibold text-gray-800">
+                      <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-church text-emerald-600 text-sm"></i>
+                        <span id="serviceTitleDisplay">ADECUACION PARA MISA EN CAMPO SANTO (SIN ARREGLO FLORAL)</span>
+                      </div>
+                    </td>
+                    <td class="p-2 text-center">
+                      <input type="text" value="0.00" onchange="updateMisaPrice()" id="misaDiscountInput" class="w-14 border border-gray-300 rounded text-center py-0.5 bg-white font-mono">
+                    </td>
+                    <td class="p-2 text-center">
+                      <input type="number" min="1" value="1" onchange="updateMisaPrice()" id="misaQtyInput" class="w-10 border border-gray-300 rounded text-center py-0.5 bg-white font-mono">
+                    </td>
+                    <td class="p-2 text-right font-mono" id="misaUnitPriceDisplay">150.00</td>
+                    <td class="p-2 text-right font-mono font-bold text-emerald-700" id="misaSubtotalDisplay">150.00</td>
+                    <td class="p-2 text-center font-bold text-gray-600">BOL</td>
+                    <td class="p-2 text-center" id="misaStatusBadge">
+                      <span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center gap-1">
+                        <i class="fa-solid fa-clock"></i> Pendiente
+                      </span>
+                    </td>
+                    <td class="p-2 text-center space-x-1">
+                      <!-- PROMINENT BUTTON TO OPEN MISA MODAL -->
+                      <button onclick="openMisaModalFor('misaRowItem')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded shadow-sm font-semibold text-[11px] transition inline-flex items-center space-x-1 animate-pulse">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <span id="misaBtnText">Programar</span>
+                      </button>
+                      <button onclick="deleteExtraService('misaRowItem')" class="text-gray-400 hover:text-red-500 p-1" title="Eliminar servicio">
+                        <i class="fa-regular fa-trash-can"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- PROMOTIONAL HIGHLIGHT BANNER FOR DIGITIZATION -->
+            <div class="mt-3 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-lg p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
+              <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2.5 rounded-full shrink-0">
+                  <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs md:text-sm">¡Digitalización de Misas Kantutani Activa!</h4>
+                  <p class="text-[11px] text-emerald-100">Registra y programa ceremonias directamente en el sistema Saffiro. Reemplaza el talonario manual.</p>
+                </div>
+              </div>
+              <button onclick="openMisaModalFor('misaRowItem')" class="bg-white text-emerald-800 hover:bg-emerald-50 px-3.5 py-1.5 rounded-md font-bold text-xs shadow transition whitespace-nowrap">
+                Formulario Digital <i class="fa-solid fa-arrow-right ml-1"></i>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- RIGHT PANEL (PAYMENT DETAILS & TOTALS) -->
+        <div class="lg:col-span-4 bg-white rounded-lg border border-gray-200 shadow-sm p-3 md:p-4 flex flex-col justify-between">
+          <div>
+            <!-- Header & Pago QR Toggle -->
+            <div class="flex items-center justify-between border-b border-gray-100 pb-2.5 mb-3">
+              <h3 class="font-bold text-gray-800 text-sm">Información del pago</h3>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs text-gray-500 font-medium">Pago QR</span>
+                <button id="qrToggleBtn" onclick="toggleQRPayment()" class="w-8 h-4 bg-gray-300 rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none">
+                  <div id="qrToggleDot" class="w-3 h-3 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out translate-x-0"></div>
+                </button>
+              </div>
+            </div>
+
+            <!-- QR Code Display Box (Hidden by default) -->
+            <div id="qrBox" class="hidden mb-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-center animate-in fade-in duration-200">
+              <div class="font-bold text-emerald-800 text-xs mb-1">Escanear para Cobro QR En Línea</div>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=SAFFIRO_KANTUTANI_PAGO_MISA_920.36" alt="QR Cobro" class="mx-auto border border-emerald-300 p-1 bg-white rounded shadow-sm w-28 h-28">
+              <p class="text-[10px] text-emerald-600 mt-1">Sincronizado con Banco BISA / Simple QR</p>
+            </div>
+
+            <!-- Payment Summary Table -->
+            <div class="mb-3 overflow-x-auto">
+              <table class="w-full text-xs text-left">
+                <thead class="text-gray-400 text-[10px] uppercase border-b border-gray-100">
+                  <tr>
+                    <th class="pb-1">Monto</th>
+                    <th class="pb-1">Forma</th>
+                    <th class="pb-1">Moneda</th>
+                    <th class="pb-1">Entidad</th>
+                    <th class="pb-1 text-center">Acción</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 font-mono" id="paymentsListTable">
+                  <!-- Default Payment Row 1 -->
+                  <tr id="pay-row-1">
+                    <td class="py-2 font-bold text-gray-800 pay-amount-val" data-bs="720.36">720.36</td>
+                    <td class="py-2 text-gray-600">GIRO</td>
+                    <td class="py-2 text-gray-600">BOL</td>
+                    <td class="py-2 text-gray-600">BISA</td>
+                    <td class="py-2 text-center text-gray-400">
+                      <i class="fa-regular fa-trash-can cursor-pointer hover:text-red-500 p-1" onclick="removePaymentRow('pay-row-1')"></i>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Add Payment Form -->
+            <div class="space-y-2 bg-gray-50 p-2.5 rounded-lg border border-gray-200/80 mb-3">
+              <div class="flex items-center justify-between">
+                <label class="text-gray-600 text-[11px] font-medium">Moneda</label>
+                <select id="newPayCurrency" class="w-36 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none font-bold">
+                  <option value="BOL">BOL (Bs.)</option>
+                  <option value="USD">USD ($us.)</option>
+                </select>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <label class="text-gray-600 text-[11px] font-medium">Monto a abonar</label>
+                <div class="relative w-36">
+                  <input type="number" id="newPayAmount" value="200.00" step="0.5" class="w-full border border-gray-300 rounded px-2 py-1 text-xs font-mono font-bold bg-white text-right focus:outline-none text-emerald-700">
+                  <span class="absolute right-2 top-1 text-emerald-600"><i class="fa-solid fa-circle-check"></i></span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <label class="text-gray-600 text-[11px] font-medium">Forma de pago</label>
+                <select id="newPayMethod" class="w-36 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
+                  <option value="EFE">EFE (EFECTIVO)</option>
+                  <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                  <option value="TARJETA">TARJETA DÉBITO/CRÉDITO</option>
+                  <option value="GIRO">GIRO BANCARIO</option>
+                </select>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <label class="text-gray-600 text-[11px] font-medium">Banco</label>
+                <select id="newPayBank" class="w-36 border border-gray-300 rounded px-2 py-1 text-xs bg-white focus:outline-none">
+                  <option value="BISA">BANCO BISA</option>
+                  <option value="BNB">BNB</option>
+                  <option value="MERCANTIL">MERCANTIL SANTA CRUZ</option>
+                  <option value="UNION">BANCO UNIÓN</option>
+                  <option value="NINGUNO">N/A (EFECTIVO)</option>
+                </select>
+              </div>
+            </div>
+
+            <button onclick="addNewPayment()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded shadow-sm text-xs transition mb-3 flex items-center justify-center gap-1">
+              <i class="fa-solid fa-plus-circle"></i> Registrar abono
+            </button>
+          </div>
+
+          <!-- BOTTOM ACTION BUTTONS AND TOTALS -->
+          <div class="border-t border-gray-200 pt-3 space-y-1.5">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-gray-500 font-medium">Total a pagar:</span>
+              <span class="font-bold text-emerald-700 text-sm font-mono" id="totalPayBs">Bs. 920.36</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-gray-500">Total en USD:</span>
+              <span class="font-bold text-gray-700 font-mono" id="totalPayUsd">$us. 132.24</span>
+            </div>
+            <div class="flex justify-between items-center text-xs pt-1 border-t border-dashed border-gray-200">
+              <span class="text-gray-500">Monto Abonado:</span>
+              <span class="font-bold text-emerald-600 font-mono" id="totalPaidDisplay">Bs. 720.36</span>
+            </div>
+            <div class="flex justify-between items-center text-xs font-semibold" id="changeRow">
+              <span class="text-fuchsia-600" id="balanceLabel">Saldo pendiente:</span>
+              <span class="font-mono text-fuchsia-600" id="balanceDisplay">Bs. 200.00</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-1.5 pt-2">
+              <button onclick="processFinalizeTransaction()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2 rounded text-[11px] transition shadow flex items-center justify-center gap-1 col-span-2">
+                <i class="fa-solid fa-check-double"></i> Procesar Cobro
+              </button>
+              <button onclick="resetTransaction()" class="bg-slate-500 hover:bg-slate-600 text-white font-medium py-2 rounded text-[11px] transition">
+                Nuevo
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: DIGITALIZACIÓN TALONARIO MISA KANTUTANI -->
+  <!-- ========================================================================= -->
+  <div id="misaModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 md:p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden border border-gray-300 flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-200">
+      
+      <!-- Modal Header Style (Simulating Kantutani Official Slip) -->
+      <div class="bg-gray-100 border-b border-gray-300 p-3 md:p-4 flex items-center justify-between relative shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="flex flex-col items-start">
+            <div class="flex items-center space-x-1">
+              <div class="w-0 h-0 border-l-[10px] border-l-transparent border-b-[12px] border-b-emerald-800 border-r-[10px] border-r-transparent"></div>
+              <span class="font-black text-lg md:text-xl text-emerald-800 tracking-tighter leading-none">KANTUTANI</span>
+            </div>
+            <span class="text-[8px] md:text-[9px] font-bold text-gray-500 tracking-widest leading-none pl-1">INMOBILIARIA S.A.</span>
+          </div>
+        </div>
+        <div class="text-center px-2">
+          <h2 class="text-xs md:text-base font-extrabold text-gray-900 uppercase underline tracking-wide">
+            PROGRAMACIÓN DE CEREMONIAS RELIGIOSAS O CAMPOSANTO
+          </h2>
+          <span class="text-[9px] md:text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block mt-0.5">
+            Módulo Digital Integrado Saffiro
+          </span>
+        </div>
+        <button onclick="closeMisaModal()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-200 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Form matching physical slip) -->
+      <div class="p-4 md:p-5 overflow-y-auto space-y-3.5 text-xs bg-white">
+        
+        <!-- ROW 1: Fecha y Hora de la Misa -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center border border-gray-300 p-3 rounded-lg bg-gray-50">
+          <div class="md:col-span-6 flex items-center space-x-2">
+            <label class="font-bold text-gray-800 whitespace-nowrap min-w-[90px]">Fecha Misa:</label>
+            <input type="date" id="misaFecha" value="2026-09-08" class="w-full bg-white border border-gray-300 rounded px-2.5 py-1.5 font-mono text-gray-800 font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+          <div class="md:col-span-6 flex items-center space-x-2">
+            <label class="font-bold text-gray-800 whitespace-nowrap min-w-[100px]">Hora de la Misa:</label>
+            <input type="time" id="misaHora" value="15:00" class="w-full bg-white border border-gray-300 rounded px-2.5 py-1.5 font-mono text-gray-800 font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- ROW 2: Lugar de la Misa (Capilla vs Campo Santo) -->
+        <div class="border border-gray-300 p-3 rounded-lg bg-gray-50 space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+            <label class="md:col-span-3 font-bold text-gray-800">Lugar de la Misa:</label>
+            <div class="md:col-span-9 flex items-center space-x-4 sm:space-x-6">
+              <label class="flex items-center space-x-2 cursor-pointer bg-white px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100">
+                <input type="radio" name="lugarMisa" value="CAPILLA" onchange="toggleLugarUI()" class="accent-emerald-700 w-4 h-4">
+                <span class="font-bold text-gray-700">CAPILLA</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer bg-emerald-50 border-2 border-emerald-600 px-3 py-1.5 rounded">
+                <input type="radio" name="lugarMisa" value="CAMPO SANTO" checked onchange="toggleLugarUI()" class="accent-emerald-700 w-4 h-4">
+                <span class="font-bold text-emerald-900">CAMPO SANTO <span class="text-xs text-emerald-600 font-black">[ X ]</span></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+            <div class="md:col-span-6 flex items-center space-x-2">
+              <label class="font-bold text-gray-800 min-w-[70px]">Sector:</label>
+              <input type="text" id="misaSector" value="ACACIAS" class="w-full bg-white border border-gray-300 rounded px-2.5 py-1.5 font-bold text-gray-800 uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            </div>
+            <div class="md:col-span-6 flex items-center space-x-2">
+              <label class="font-bold text-gray-800 min-w-[70px]">Ubicación:</label>
+              <input type="text" id="misaUbicacion" value="I-02" class="w-full bg-white border border-gray-300 rounded px-2.5 py-1.5 font-bold text-gray-800 uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 3: Nombre Fallecido -->
+        <div class="border border-gray-300 p-3 rounded-lg bg-gray-50 flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <label class="font-bold text-gray-800 whitespace-nowrap min-w-[130px]">Nombre Fallecido:</label>
+          <input type="text" id="misaFallecido" value="GLORIA ALBINA DEL ROSARIO GARCIA TUDELA" class="w-full bg-white border border-gray-300 rounded px-2.5 py-1.5 font-bold text-gray-800 uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        </div>
+
+        <!-- ROW 4: Coordinación Sacerdote & Solicitud de Ramo -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 border border-gray-300 p-3 rounded-lg bg-gray-50 items-center">
+          <div class="md:col-span-7 flex items-center space-x-2">
+            <label class="font-bold text-gray-800 whitespace-nowrap">Coordinación Sacerdote:</label>
+            <select id="misaSacerdoteOption" class="w-full bg-white border border-gray-300 rounded px-2 py-1.5 font-bold text-gray-800">
+              <option value="POR FAMILIA" selected>POR FAMILIA [ X ]</option>
+              <option value="PROVISTO POR KANTUTANI">PROVISTO POR KANTUTANI</option>
+            </select>
+          </div>
+          <div class="md:col-span-5 flex items-center justify-between sm:justify-end space-x-2">
+            <div class="flex items-center space-x-1.5">
+              <label class="font-bold text-gray-800">SOLICITUD DE RAMO / ARREGLO:</label>
+              <i class="fa-solid fa-lock text-gray-400 text-[10px]" title="Bloqueado automáticamente según el concepto seleccionado"></i>
+            </div>
+            <input type="checkbox" id="misaRamo" disabled class="w-5 h-5 accent-emerald-600 rounded border-gray-300 cursor-not-allowed bg-gray-200 opacity-80 pointer-events-none">
+          </div>
+        </div>
+
+        <!-- ROW 5: Cliente Solicitante & Teléfonos -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 border border-gray-300 p-3 rounded-lg bg-gray-50">
+          <div class="md:col-span-7 flex items-center space-x-2">
+            <label class="font-bold text-gray-800 whitespace-nowrap min-w-[120px]">Cliente Solicitante:</label>
+            <input type="text" id="misaCliente" value="GRACE ROMERO JALDIN" class="w-full bg-white border border-gray-300 rounded px-2.5 py-1.5 font-bold text-gray-800 uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+          <div class="md:col-span-5 flex items-center space-x-2">
+            <label class="font-bold text-gray-800 min-w-[70px]">Teléfonos:</label>
+            <input type="text" id="misaTelefono" value="70659453" class="w-full bg-white border border-gray-300 rounded px-2.5 py-1.5 font-mono text-gray-800 font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- ROW 6: Factura, CTTO, Responsable -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 border border-gray-300 p-3 rounded-lg bg-gray-50">
+          <div class="md:col-span-4 flex items-center space-x-2">
+            <label class="font-bold text-gray-800 min-w-[60px]">Factura:</label>
+            <input type="text" id="misaFactura" value="798" readonly class="w-full bg-gray-100 border border-gray-300 rounded px-2.5 py-1.5 font-mono font-bold text-emerald-800 cursor-not-allowed outline-none select-none" title="Número de factura generado automáticamente por el sistema">
+          </div>
+          <div class="md:col-span-4 flex items-center space-x-2">
+            <label class="font-bold text-gray-800 min-w-[50px]">CTTO:</label>
+            <input type="text" id="misaCtto" value="830008" class="w-full bg-white border border-gray-300 rounded px-2.5 py-1.5 font-mono font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+          <div class="md:col-span-4 flex items-center space-x-2">
+            <label class="font-bold text-gray-800 min-w-[80px]">Responsable:</label>
+            <input type="text" id="misaResponsable" value="LEONARDO TORDOYA" class="w-full bg-white border border-gray-300 rounded px-2.5 py-1.5 font-bold text-gray-800 uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- ROW 7: Observaciones -->
+        <div class="border border-gray-300 p-3 rounded-lg bg-gray-50 flex flex-col sm:flex-row items-start space-y-1 sm:space-y-0 sm:space-x-2">
+          <label class="font-bold text-gray-800 whitespace-nowrap min-w-[100px] mt-1">Observaciones:</label>
+          <textarea id="misaObservaciones" rows="2" class="w-full bg-white border border-gray-300 rounded p-2 font-bold text-gray-800 uppercase focus:ring-2 focus:ring-emerald-500 focus:outline-none">SIN ARREGLO FLORAL</textarea>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer Action Buttons -->
+      <div class="bg-gray-100 border-t border-gray-300 p-3 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <button onclick="closeMisaModal()" class="px-3.5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded text-xs transition">
+          Cancelar
+        </button>
+
+        <div class="flex items-center space-x-2">
+          <button onclick="previewAndPrintTicket()" class="px-3 py-2 bg-slate-700 hover:bg-slate-800 text-white font-semibold rounded text-xs transition flex items-center space-x-1.5">
+            <i class="fa-solid fa-print"></i>
+            <span>Vista Ticket Impreso</span>
+          </button>
+          
+          <button onclick="guardarMisaDigital()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-xs shadow-md transition flex items-center space-x-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Guardar y Vincular en Saffiro</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: TICKET DE IMPRESIÓN OFICIAL KANTUTANI -->
+  <!-- ========================================================================= -->
+  <div id="ticketModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 overflow-y-auto">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden border border-gray-400 flex flex-col max-h-[95vh]">
+      <div class="p-3 bg-slate-800 text-white flex justify-between items-center shrink-0">
+        <span class="font-bold text-xs"><i class="fa-solid fa-receipt mr-1"></i> Comprobante Oficial de Programación</span>
+        <button onclick="closeTicketModal()" class="text-gray-300 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+
+      <!-- PRINTABLE AREA -->
+      <div class="p-6 overflow-y-auto bg-white text-black font-mono text-xs leading-tight" id="printableTicket">
+        <div class="text-center border-b border-black pb-3 mb-3">
+          <div class="font-black text-base tracking-tight">INMOBILIARIA KANTUTANI S.A.</div>
+          <div class="text-[10px]">PARQUE CEMENTERIO JARDIN / FUNERARIA</div>
+          <div class="text-[10px] mt-1">Saffiro - Comprobante Digital de Misa</div>
+          <div class="text-[10px] font-bold mt-1">N° COMPROBANTE: MISA-2026-0892</div>
+        </div>
+
+        <div class="space-y-1.5 mb-4">
+          <div class="flex justify-between"><span>FECHA MISA:</span> <strong id="tktFecha">08/09/2026</strong></div>
+          <div class="flex justify-between"><span>HORA MISA:</span> <strong id="tktHora">15:00</strong></div>
+          <div class="flex justify-between"><span>LUGAR:</span> <strong id="tktLugar">CAMPO SANTO</strong></div>
+          <div class="flex justify-between"><span>SECTOR:</span> <strong id="tktSector">ACACIAS</strong></div>
+          <div class="flex justify-between"><span>UBICACIÓN:</span> <strong id="tktUbicacion">I-02</strong></div>
+          <div class="border-t border-dashed border-gray-400 my-2"></div>
+          <div><span>FALLECIDO:</span></div>
+          <div class="font-bold text-sm bg-gray-100 p-1 rounded my-1" id="tktFallecido">GLORIA ALBINA DEL ROSARIO GARCIA TUDELA</div>
+          <div class="flex justify-between"><span>SOLICITANTE:</span> <strong id="tktCliente">GRACE ROMERO JALDIN</strong></div>
+          <div class="flex justify-between"><span>TELÉFONO:</span> <strong id="tktTel">70659453</strong></div>
+          <div class="flex justify-between"><span>CONTRATO / CTTO:</span> <strong id="tktCtto">830008</strong></div>
+          <div class="flex justify-between"><span>FACTURA N°:</span> <strong id="tktFactura">798</strong></div>
+          <div class="flex justify-between"><span>RESPONSABLE:</span> <strong id="tktResp">LEONARDO TORDOYA</strong></div>
+          <div class="flex justify-between"><span>SACERDOTE:</span> <strong id="tktSac">POR FAMILIA</strong></div>
+          <div class="flex justify-between"><span>SOLICITUD RAMO:</span> <strong id="tktRamo">NO</strong></div>
+          <div class="border-t border-dashed border-gray-400 my-2"></div>
+          <div><span>OBSERVACIONES:</span></div>
+          <div class="italic bg-gray-50 p-1.5 border border-gray-200 rounded" id="tktObs">SIN ARREGLO FLORAL</div>
+        </div>
+
+        <!-- RECOMENDACIONES SECTION -->
+        <div class="border-t border-dashed border-black pt-2 mt-2">
+          <div class="font-bold text-[11px] uppercase tracking-wide mb-1 text-center">*** RECOMENDACIONES ***</div>
+          <ul class="list-disc list-inside text-[9.5px] space-y-1 text-gray-800 leading-tight">
+            <li>No se puede consumir bebidas, ni comida dentro del Campo Santo.</li>
+            <li>No se puede tener más de 3 personas dentro de un grupo musical.</li>
+            <li>Está estrictamente prohibido el consumo de bebidas alcohólicas.</li>
+            <li>Al terminar la misa, al lapso de 30 minutos el personal recogerá la adecuación.</li>
+          </ul>
+        </div>
+
+        <div class="text-center border-t border-black pt-3 mt-4 text-[10px] space-y-1">
+          <p>*** Sincronizado Digitalmente en Saffiro ***</p>
+          <p>Favor presentar este comprobante el día de la ceremonia.</p>
+          <div class="pt-2 flex justify-center">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=KANTUTANI_MISA_830008" alt="QR Ticket" class="w-20 h-20 border p-0.5">
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-gray-100 border-t border-gray-300 flex justify-end space-x-2 shrink-0">
+        <button onclick="closeTicketModal()" class="px-3 py-1.5 bg-gray-300 text-gray-800 rounded font-semibold text-xs">Cerrar</button>
+        <button onclick="window.print()" class="px-4 py-1.5 bg-emerald-700 text-white rounded font-bold text-xs flex items-center gap-1 shadow">
+          <i class="fa-solid fa-print"></i> Imprimir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: SEARCH CLIENT / DIRECTORIO -->
+  <!-- ========================================================================= -->
+  <div id="searchClientModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-300">
+      <div class="bg-emerald-800 text-white p-3 flex justify-between items-center">
+        <h3 class="font-bold text-xs md:text-sm"><i class="fa-solid fa-users mr-1.5"></i> Directorio de Clientes Kantutani</h3>
+        <button onclick="closeModal('searchClientModal')" class="text-white hover:text-gray-200"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="p-4 space-y-3">
+        <div>
+          <label class="text-xs font-medium text-gray-600 block mb-1">Buscar por Nombre, C.I. o Código de Cliente:</label>
+          <input type="text" id="clientSearchQuery" placeholder="Ej. Rosa Choque, 2430217, Grace Romero..." class="w-full border border-gray-300 rounded p-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        </div>
+
+        <div class="border rounded-lg max-h-48 overflow-y-auto">
+          <ul class="divide-y divide-gray-200 text-xs" id="clientDirectoryList">
+            <!-- Dynamic list -->
+          </ul>
+        </div>
+      </div>
+      <div class="bg-gray-100 p-2.5 flex justify-end">
+        <button onclick="closeModal('searchClientModal')" class="px-3 py-1 bg-gray-300 rounded text-xs font-semibold">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ADD PRODUCT / SERVICE -->
+  <div id="addProductModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-300">
+      <div class="bg-emerald-800 text-white p-3 flex justify-between items-center">
+        <h3 class="font-bold text-xs md:text-sm"><i class="fa-solid fa-cart-plus mr-1.5"></i> Agregar Concepto o Servicio Adicional</h3>
+        <button onclick="closeModal('addProductModal')" class="text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="p-4 space-y-3 text-xs">
+        <div>
+          <label class="font-semibold text-gray-700 block mb-1">Seleccionar Servicio:</label>
+          <select id="newServiceSelect" class="w-full border border-gray-300 rounded p-2 text-xs font-bold" onchange="updateNewServicePriceDefault()">
+            <option value="ADECUACION PARA MISA EN CAMPO SANTO (SIN ARREGLO FLORAL)|150.00|BOL150|false">ADECUACION PARA MISA EN CAMPO SANTO (SIN ARREGLO FLORAL) - Bs. 150.00</option>
+            <option value="MISA EN CAMPO SANTO (CON ARREGLO FLORAL)|200.00|BOL200|true">MISA EN CAMPO SANTO (CON ARREGLO FLORAL) - Bs. 200.00</option>
+            <option value="ARREGLO FLORAL PREMIUM|150.00|BOL150|true">ARREGLO FLORAL PREMIUM - Bs. 150.00</option>
+            <option value="MANTENIMIENTO ANUAL JARDIN|350.00|BOL350|false">MANTENIMIENTO ANUAL JARDIN - Bs. 350.00</option>
+            <option value="USO DE CAPILLA ARDIENTE|400.00|BOL400|false">USO DE CAPILLA ARDIENTE - Bs. 400.00</option>
+            <option value="MISA REQUISITORIA ANIVERSARIO|250.00|BOL250|false">MISA REQUISITORIA ANIVERSARIO - Bs. 250.00</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-semibold text-gray-700 block mb-1">Precio Unitario (Bs.):</label>
+            <input type="number" id="newServicePrice" value="150.00" class="w-full border border-gray-300 rounded p-1.5 font-mono font-bold">
+          </div>
+          <div>
+            <label class="font-semibold text-gray-700 block mb-1">Cantidad:</label>
+            <input type="number" id="newServiceQty" value="1" min="1" class="w-full border border-gray-300 rounded p-1.5 font-mono font-bold">
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-100 p-3 flex justify-end space-x-2">
+        <button onclick="closeModal('addProductModal')" class="px-3 py-1.5 bg-gray-300 rounded text-xs">Cancelar</button>
+        <button onclick="confirmAddExtraService()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-xs shadow">Agregar a la Orden</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GENERIC NAVIGATION MODAL -->
+  <div id="navModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-300">
+      <div class="bg-slate-800 text-white p-3 flex justify-between items-center">
+        <h3 class="font-bold text-xs md:text-sm" id="navModalTitle">Módulo Saffiro</h3>
+        <button onclick="closeModal('navModal')" class="text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="p-4 text-xs text-gray-700 space-y-2">
+        <p id="navModalBody">Información del módulo seleccionada.</p>
+        <div class="p-2 bg-emerald-50 border border-emerald-200 rounded text-emerald-800 text-[11px]">
+          <i class="fa-solid fa-circle-check mr-1"></i> Estado: Operativo y conectado a la red central Kantutani.
+        </div>
+      </div>
+      <div class="bg-gray-100 p-2.5 flex justify-end">
+        <button onclick="closeModal('navModal')" class="px-3 py-1 bg-slate-700 text-white rounded text-xs font-semibold">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCCESS CONFIRMATION TOAST / NOTIFICATION -->
+  <div id="successToast" class="fixed bottom-6 right-6 bg-slate-900 text-white p-4 rounded-xl shadow-2xl z-50 border border-emerald-500/50 hidden max-w-sm animate-in slide-in-from-bottom duration-300">
+    <div class="flex items-start space-x-3">
+      <div class="w-9 h-9 bg-emerald-500 text-slate-950 rounded-full flex items-center justify-center font-bold shrink-0">
+        <i class="fa-solid fa-check text-lg"></i>
+      </div>
+      <div>
+        <h4 class="font-bold text-sm text-emerald-400" id="toastHeader">¡Operación Exitosa!</h4>
+        <p class="text-xs text-gray-300 mt-0.5" id="toastMessage">La misa para <span id="toastFallecido" class="font-semibold text-white"></span> ha sido vinculada al CTTO <span id="toastCtto" class="font-mono text-emerald-300"></span>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC & INTERACTIVITY -->
+  <script>
+    // --- DATABASE MOCK CLIENTS ---
+    const clientsDb = [
+      { code: '2430217LP', name: 'ROSA CHOQUE VELA', ci: '4839201 LP', ctto: '222511562', asesor: '202494' },
+      { code: '830008-KANT', name: 'GRACE ROMERO JALDIN', ci: '3392019 LP', ctto: '830008', asesor: '109283' },
+      { code: '1092832LP', name: 'CARLOS ALBERTO MAMANI', ci: '5920192 LP', ctto: '44910293', asesor: '302910' },
+      { code: '5928190CB', name: 'MARIA ELENA QUINTEROS', ci: '2093810 CB', ctto: '77291029', asesor: '202494' }
+    ];
+
+    let currentClient = clientsDb[0];
+    let isQREnabled = false;
+    let misaProgrammed = false;
+    let deferredPrompt = null;
+    let activeMisaRowId = 'misaRowItem';
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+      setupSidebarMenu();
+      setupClientDirectory();
+      recalculateTotals();
+      setCurrentDate();
+      registerServiceWorker();
+    };
+
+    function setCurrentDate() {
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      document.getElementById('currentDateStr').innerText = `${day}/${month}/${year}`;
+    }
+
+    // --- SIDEBAR NAVIGATION ---
+    const sidebarItems = [
+      { icon: 'fa-house', label: 'Inicio', action: "openModal('navModal', 'Inicio', 'Bienvenido al panel principal de Saffiro Inmobiliaria Kantutani.')" },
+      { icon: 'fa-users-gear', label: 'Personal', action: "openModal('navModal', 'Personal', 'Módulo de gestión de personal, roles y turnos de caja.')" },
+      { icon: 'fa-headset', label: 'Atención cliente', action: "openModal('navModal', 'Atención al cliente', 'Consultas, tickets de soporte y requerimientos de usuarios.')" },
+      { icon: 'fa-address-book', label: 'Gestión cliente', action: "openSearchClientModal()" },
+      { icon: 'fa-cart-shopping', label: 'Facturación / Ventas', active: true, action: "javascript:void(0)" },
+      { icon: 'fa-receipt', label: 'Compras y Pagos', action: "openModal('navModal', 'Compras y pagos', 'Gestión de comprobantes de egreso, proveedores y caja chica.')" },
+      { icon: 'fa-phone', label: 'Call Center', action: "openModal('navModal', 'Call Center', 'Registro de llamadas salientes y cobranza preventiva.')" },
+      { icon: 'fa-ribbon', label: 'Funeraria', action: "openModal('navModal', 'Servicios Funerarios', 'Coordinación de salas velatorias Santa María y traslados.')" },
+      { icon: 'fa-tree', label: 'Parque Campo Santo', action: "openModal('navModal', 'Parque Cementerio', 'Gestión de sectores, sepultaciones y mantenimiento de parcelas.')" },
+      { icon: 'fa-chart-line', label: 'Comercial', action: "openModal('navModal', 'Comercial', 'Métricas de ventas de asesores e incentivos.')" },
+      { icon: 'fa-folder-open', label: 'Archivos', action: "openModal('navModal', 'Archivos', 'Expedientes digitales de contratos y títulos de propiedad.')" },
+      { icon: 'fa-scale-balanced', label: 'Legal', action: "openModal('navModal', 'Legal', 'Estado de minutas, escrituras públicas y transferencias.')" }
+    ];
+
+    function setupSidebarMenu() {
+      const menuContainer = document.getElementById('sidebarMenuList');
+      menuContainer.innerHTML = sidebarItems.map(item => `
+        <li>
+          <a href="#" onclick="${item.action}" class="flex items-center space-x-3 px-3 md:px-4 py-2 hover:bg-gray-50 transition ${item.active ? 'bg-emerald-50 text-emerald-700 font-semibold border-l-4 border-emerald-600' : 'text-gray-700'}">
+            <i class="fa-solid ${item.icon} w-4 text-center ${item.active ? 'text-emerald-600' : 'text-gray-400'}"></i>
+            <span class="hidden md:inline truncate">${item.label}</span>
+          </a>
+        </li>
+      `).join('');
+    }
+
+    // --- CLIENT SEARCH & DIRECTORY ---
+    function setupClientDirectory() {
+      const list = document.getElementById('clientDirectoryList');
+      list.innerHTML = clientsDb.map(c => `
+        <li onclick="selectClientFromDb('${c.code}')" class="p-2.5 hover:bg-emerald-50 cursor-pointer flex justify-between items-center transition">
+          <div>
+            <div class="font-bold text-gray-800">${c.name}</div>
+            <div class="text-[10px] text-gray-500">C.I.: ${c.ci} | CTTO: ${c.ctto}</div>
+          </div>
+          <span class="bg-gray-200 text-gray-700 text-[10px] px-2 py-0.5 rounded font-mono font-bold">${c.code}</span>
+        </li>
+      `).join('');
+    }
+
+    function executeClientSearch() {
+      const code = document.getElementById('clientCodeInput').value.trim().toUpperCase();
+      const found = clientsDb.find(c => c.code.toUpperCase() === code || c.name.toUpperCase().includes(code));
+      if (found) {
+        selectClientFromDb(found.code);
+      } else {
+        // Custom search alert
+        document.getElementById('clientNameDisplay').innerHTML = `<span>${code} (NUEVO CLIENTE)</span> <span class="text-[10px] text-gray-500 font-normal">CI: S/N</span>`;
+        showNotification('Búsqueda de Cliente', `Se ha asignado el código temporal: ${code}`);
+      }
+    }
+
+    function selectClientFromDb(code) {
+      const client = clientsDb.find(c => c.code === code);
+      if (client) {
+        currentClient = client;
+        document.getElementById('clientCodeInput').value = client.code;
+        document.getElementById('clientNameDisplay').innerHTML = `<span>${client.name}</span> <span class="text-[10px] text-gray-500 font-normal">CI: ${client.ci}</span>`;
+        document.getElementById('asesorCodeDisplay').innerText = client.asesor;
+        document.getElementById('misaCliente').value = client.name;
+        document.getElementById('misaCtto').value = client.ctto;
+        closeModal('searchClientModal');
+        showNotification('Cliente Sincronizado', `Cargados los datos de ${client.name}`);
+      }
+    }
+
+    function openSearchClientModal() {
+      document.getElementById('searchClientModal').classList.remove('hidden');
+    }
+
+    function showClientInfoModal() {
+      openModal('navModal', 'Ficha del Cliente', `
+        <strong>Nombre:</strong> ${currentClient.name}<br>
+        <strong>Código:</strong> ${currentClient.code}<br>
+        <strong>C.I.:</strong> ${currentClient.ci}<br>
+        <strong>Contrato Vinculado:</strong> ${currentClient.ctto}<br>
+        <strong>Asesor Comercial:</strong> ${currentClient.asesor}<br>
+        <strong>Estado Crediticio:</strong> <span class="text-emerald-700 font-bold">A1 - Sin Morosidad</span>
+      `);
+    }
+
+    // --- MISA MODAL & DIGITIZATION ---
+    function openMisaModal() {
+      openMisaModalFor(activeMisaRowId);
+    }
+
+    function openMisaModalFor(rowId) {
+      activeMisaRowId = rowId || 'misaRowItem';
+      const row = document.getElementById(activeMisaRowId);
+      
+      let tieneArreglo = false;
+      if (row && row.getAttribute('data-tiene-ramo') === 'true') {
+        tieneArreglo = true;
+      }
+
+      // Automatically set and lock/disable the checkbox
+      const ramoCheckbox = document.getElementById('misaRamo');
+      ramoCheckbox.checked = tieneArreglo;
+      ramoCheckbox.disabled = true;
+
+      // Update observations hint automatically
+      const obsElem = document.getElementById('misaObservaciones');
+      if (tieneArreglo) {
+        if (!obsElem.value || obsElem.value === 'SIN ARREGLO FLORAL') {
+          obsElem.value = 'INCLUYE ARREGLO FLORAL PREMIUM DE PARQUE';
+        }
+      } else {
+        if (!obsElem.value || obsElem.value === 'INCLUYE ARREGLO FLORAL PREMIUM DE PARQUE') {
+          obsElem.value = 'SIN ARREGLO FLORAL';
+        }
+      }
+
+      document.getElementById('misaModal').classList.remove('hidden');
+    }
+
+    function closeMisaModal() {
+      document.getElementById('misaModal').classList.add('hidden');
+    }
+
+    function toggleLugarUI() {
+      const selected = document.querySelector('input[name="lugarMisa"]:checked').value;
+      if (selected === 'CAPILLA') {
+        document.getElementById('misaSector').value = 'CAPILLA SANTA MARIA';
+        document.getElementById('misaUbicacion').value = 'SALA A';
+      } else {
+        document.getElementById('misaSector').value = 'ACACIAS';
+        document.getElementById('misaUbicacion').value = 'I-02';
+      }
+    }
+
+    function guardarMisaDigital() {
+      const fallecido = document.getElementById('misaFallecido').value || 'POR DEFINIR';
+      const ctto = document.getElementById('misaCtto').value || 'S/N';
+      const hora = document.getElementById('misaHora').value;
+
+      misaProgrammed = true;
+      closeMisaModal();
+
+      // Update Badge on Main Table
+      const badge = document.getElementById('misaStatusBadge');
+      if (badge) {
+        badge.innerHTML = `
+          <span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full font-bold text-[10px] inline-flex items-center gap-1">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i> Agendada (${hora})
+          </span>
+        `;
+      }
+
+      const misaBtn = document.getElementById('misaBtnText');
+      if (misaBtn) {
+        misaBtn.innerText = "Modificar";
+      }
+
+      // Show Toast Notification safely
+      const toastHeader = document.getElementById('toastHeader');
+      const toastFallecido = document.getElementById('toastFallecido');
+      const toastCtto = document.getElementById('toastCtto');
+
+      if (toastHeader) toastHeader.innerText = "¡Misa Agendada en Saffiro!";
+      if (toastFallecido) toastFallecido.innerText = fallecido;
+      if (toastCtto) toastCtto.innerText = ctto;
+
+      const toast = document.getElementById('successToast');
+      if (toast) {
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 5000);
+      }
+    }
+
+    function previewAndPrintTicket() {
+      // Fill ticket fields from modal
+      document.getElementById('tktFecha').innerText = document.getElementById('misaFecha').value;
+      document.getElementById('tktHora').innerText = document.getElementById('misaHora').value;
+      
+      const lugar = document.querySelector('input[name="lugarMisa"]:checked').value;
+      document.getElementById('tktLugar').innerText = lugar;
+      document.getElementById('tktSector').innerText = document.getElementById('misaSector').value;
+      document.getElementById('tktUbicacion').innerText = document.getElementById('misaUbicacion').value;
+      document.getElementById('tktFallecido').innerText = document.getElementById('misaFallecido').value;
+      document.getElementById('tktCliente').innerText = document.getElementById('misaCliente').value;
+      document.getElementById('tktTel').innerText = document.getElementById('misaTelefono').value;
+      document.getElementById('tktCtto').innerText = document.getElementById('misaCtto').value;
+      document.getElementById('tktFactura').innerText = document.getElementById('misaFactura').value;
+      document.getElementById('tktResp').innerText = document.getElementById('misaResponsable').value;
+      document.getElementById('tktSac').innerText = document.getElementById('misaSacerdoteOption').value;
+      document.getElementById('tktRamo').innerText = document.getElementById('misaRamo').checked ? 'SÍ (INCLUIDO)' : 'NO';
+      document.getElementById('tktObs').innerText = document.getElementById('misaObservaciones').value || 'NINGUNA';
+
+      document.getElementById('ticketModal').classList.remove('hidden');
+    }
+
+    function closeTicketModal() {
+      document.getElementById('ticketModal').classList.add('hidden');
+    }
+
+    // --- DYNAMIC CALCULATIONS & PAYMENTS ---
+    function updateRowCuotas(input) {
+      const qty = parseInt(input.value) || 1;
+      const row = input.closest('tr');
+      const baseBs = 720.36;
+      const totalBs = (baseBs * qty).toFixed(2);
+      const totalUsd = (totalBs / 6.96).toFixed(2);
+
+      row.querySelector('.row-total-bs').innerText = totalBs;
+      row.querySelector('.row-total-usd').innerText = totalUsd;
+      row.querySelector('.item-checkbox').setAttribute('data-price-bs', totalBs);
+
+      recalculateTotals();
+    }
+
+    function updateMisaPrice() {
+      const qty = parseInt(document.getElementById('misaQtyInput').value) || 1;
+      const discount = parseFloat(document.getElementById('misaDiscountInput').value) || 0;
+      const unitPrice = parseFloat(document.getElementById('misaUnitPriceDisplay').innerText) || 150.00;
+      const subtotal = Math.max(0, (unitPrice * qty) - discount).toFixed(2);
+
+      document.getElementById('misaSubtotalDisplay').innerText = subtotal;
+      recalculateTotals();
+    }
+
+    function recalculateTotals() {
+      let totalBs = 0;
+
+      // Contract checkboxes
+      document.querySelectorAll('.item-checkbox:checked').forEach(cb => {
+        totalBs += parseFloat(cb.getAttribute('data-price-bs')) || 0;
+      });
+
+      // Extra Services
+      const misaSub = parseFloat(document.getElementById('misaSubtotalDisplay')?.innerText) || 0;
+      totalBs += misaSub;
+
+      // Additional Concept rows if any
+      document.querySelectorAll('.extra-service-price').forEach(el => {
+        totalBs += parseFloat(el.innerText) || 0;
+      });
+
+      const totalUsd = (totalBs / 6.96).toFixed(2);
+
+      document.getElementById('totalPayBs').innerText = `Bs. ${totalBs.toFixed(2)}`;
+      document.getElementById('totalPayUsd').innerText = `$us. ${totalUsd}`;
+
+      // Calculate paid amounts
+      let paidBs = 0;
+      document.querySelectorAll('.pay-amount-val').forEach(el => {
+        paidBs += parseFloat(el.getAttribute('data-bs')) || 0;
+      });
+
+      document.getElementById('totalPaidDisplay').innerText = `Bs. ${paidBs.toFixed(2)}`;
+
+      const balance = totalBs - paidBs;
+      if (balance > 0) {
+        document.getElementById('balanceLabel').innerText = 'Saldo pendiente:';
+        document.getElementById('balanceLabel').className = 'text-fuchsia-600';
+        document.getElementById('balanceDisplay').innerText = `Bs. ${balance.toFixed(2)}`;
+        document.getElementById('balanceDisplay').className = 'font-mono text-fuchsia-600 font-bold';
+      } else {
+        document.getElementById('balanceLabel').innerText = 'Cambio a devolver:';
+        document.getElementById('balanceLabel').className = 'text-emerald-700';
+        document.getElementById('balanceDisplay').innerText = `Bs. ${Math.abs(balance).toFixed(2)}`;
+        document.getElementById('balanceDisplay').className = 'font-mono text-emerald-700 font-bold';
+      }
+    }
+
+    function toggleSelectAllItems(masterCb) {
+      document.querySelectorAll('.item-checkbox').forEach(cb => {
+        cb.checked = masterCb.checked;
+      });
+      recalculateTotals();
+    }
+
+    function toggleQRPayment() {
+      isQREnabled = !isQREnabled;
+      const box = document.getElementById('qrBox');
+      const dot = document.getElementById('qrToggleDot');
+      const btn = document.getElementById('qrToggleBtn');
+
+      if (isQREnabled) {
+        box.classList.remove('hidden');
+        btn.classList.replace('bg-gray-300', 'bg-emerald-600');
+        dot.classList.replace('translate-x-0', 'translate-x-4');
+      } else {
+        box.classList.add('hidden');
+        btn.classList.replace('bg-emerald-600', 'bg-gray-300');
+        dot.classList.replace('translate-x-4', 'translate-x-0');
+      }
+    }
+
+    function removePaymentRow(rowId) {
+      const row = document.getElementById(rowId);
+      if (row) {
+        row.remove();
+        recalculateTotals();
+      }
+    }
+
+    function addNewPayment() {
+      const currency = document.getElementById('newPayCurrency').value;
+      const amount = parseFloat(document.getElementById('newPayAmount').value) || 0;
+      const method = document.getElementById('newPayMethod').value;
+      const bank = document.getElementById('newPayBank').value;
+
+      if (amount <= 0) {
+        showNotification('Monto Inválido', 'Ingrese un monto mayor a 0 para el abono.');
+        return;
+      }
+
+      const amountBs = currency === 'USD' ? (amount * 6.96).toFixed(2) : amount.toFixed(2);
+      const rowId = 'pay-row-' + Date.now();
+
+      const tbody = document.getElementById('paymentsListTable');
+      const tr = document.createElement('tr');
+      tr.id = rowId;
+      tr.innerHTML = `
+        <td class="py-2 font-bold text-gray-800 pay-amount-val" data-bs="${amountBs}">${amountBs}</td>
+        <td class="py-2 text-gray-600">${method}</td>
+        <td class="py-2 text-gray-600">${currency}</td>
+        <td class="py-2 text-gray-600">${bank}</td>
+        <td class="py-2 text-center text-gray-400">
+          <i class="fa-regular fa-trash-can cursor-pointer hover:text-red-500 p-1" onclick="removePaymentRow('${rowId}')"></i>
+        </td>
+      `;
+      tbody.appendChild(tr);
+
+      recalculateTotals();
+      showNotification('Abono Agregado', `Registrado abono por ${currency} ${amount.toFixed(2)}`);
+    }
+
+    // --- EXTRA PRODUCTS MANAGEMENT ---
+    function openAddProductModal() {
+      document.getElementById('addProductModal').classList.remove('hidden');
+    }
+
+    function updateNewServicePriceDefault() {
+      const val = document.getElementById('newServiceSelect').value;
+      const price = val.split('|')[1];
+      document.getElementById('newServicePrice').value = price;
+    }
+
+    function confirmAddExtraService() {
+      const val = document.getElementById('newServiceSelect').value;
+      const parts = val.split('|');
+      const name = parts[0];
+      const unitPrice = parseFloat(document.getElementById('newServicePrice').value) || 0;
+      const qty = parseInt(document.getElementById('newServiceQty').value) || 1;
+      const tieneRamo = parts[3] === 'true';
+      const subtotal = (unitPrice * qty).toFixed(2);
+
+      const tbody = document.getElementById('extraServicesTableBody');
+      const rowId = 'extra-prod-' + Date.now();
+
+      const isMisaType = name.toUpperCase().includes('MISA');
+
+      const tr = document.createElement('tr');
+      tr.id = rowId;
+      tr.setAttribute('data-tiene-ramo', tieneRamo ? 'true' : 'false');
+      tr.className = isMisaType ? "bg-emerald-50/40" : "";
+      tr.innerHTML = `
+        <td class="p-2 font-semibold text-gray-800 flex items-center space-x-2">
+          <i class="fa-solid ${isMisaType ? 'fa-church text-emerald-600' : 'fa-box text-emerald-600'}"></i>
+          <span>${name}</span>
+        </td>
+        <td class="p-2 text-center font-mono">0.00</td>
+        <td class="p-2 text-center font-mono">${qty}</td>
+        <td class="p-2 text-right font-mono">${unitPrice.toFixed(2)}</td>
+        <td class="p-2 text-right font-mono font-bold text-emerald-700 extra-service-price">${subtotal}</td>
+        <td class="p-2 text-center font-bold text-gray-600">BOL</td>
+        <td class="p-2 text-center" id="status-${rowId}">
+          <span class="bg-${isMisaType ? 'amber' : 'blue'}-100 text-${isMisaType ? 'amber' : 'blue'}-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
+            ${isMisaType ? 'Pendiente' : 'Agregado'}
+          </span>
+        </td>
+        <td class="p-2 text-center space-x-1">
+          ${isMisaType ? `
+            <button onclick="openMisaModalFor('${rowId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded shadow-sm font-semibold text-[11px] transition inline-flex items-center space-x-1">
+              <i class="fa-solid fa-calendar-plus"></i>
+              <span>Programar</span>
+            </button>
+          ` : ''}
+          <button onclick="deleteExtraService('${rowId}')" class="text-gray-400 hover:text-red-500 p-1"><i class="fa-regular fa-trash-can"></i></button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+
+      closeModal('addProductModal');
+      recalculateTotals();
+      showNotification('Servicio Adicionado', `${name} agregado exitosamente.`);
+    }
+
+    function deleteExtraService(rowId) {
+      const row = document.getElementById(rowId);
+      if (row) {
+        row.remove();
+        recalculateTotals();
+      }
+    }
+
+    function openAddContractModal() {
+      openModal('navModal', 'Vincular Contrato', 'Ingrese el número de contrato o búsqueda por CI para importar parcelas o servicios pendientes.');
+    }
+
+    // --- FINALIZE TRANSACTION & RESET ---
+    function processFinalizeTransaction() {
+      let paidBs = 0;
+      document.querySelectorAll('.pay-amount-val').forEach(el => {
+        paidBs += parseFloat(el.getAttribute('data-bs')) || 0;
+      });
+
+      if (paidBs <= 0) {
+        showNotification('Aviso de Cobro', 'Por favor registre al menos un abono de pago antes de finalizar.');
+        return;
+      }
+
+      openModal('navModal', '¡Transacción Procesada!', `
+        <div class="text-center py-2 space-y-2">
+          <i class="fa-solid fa-circle-check text-4xl text-emerald-600"></i>
+          <p class="font-bold text-sm">Factura Digital N° 798 emitida correctamente.</p>
+          <p>Comprobante de Misa vinculado al expediente de ${currentClient.name}.</p>
+          <button onclick="previewAndPrintTicket()" class="mt-2 bg-emerald-700 text-white px-4 py-1.5 rounded font-bold text-xs"><i class="fa-solid fa-print"></i> Imprimir Comprobante Oficial</button>
+        </div>
+      `);
+    }
+
+    function resetTransaction() {
+      if (confirm("¿Desea reiniciar el formulario e iniciar un nuevo cobro?")) {
+        location.reload();
+      }
+    }
+
+    // --- UTILITY MODALS & NOTIFICATIONS ---
+    function openModal(modalId, title, bodyHtml) {
+      if (title) document.getElementById('navModalTitle').innerText = title;
+      if (bodyHtml) document.getElementById('navModalBody').innerHTML = bodyHtml;
+      document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    function showNotification(title, msg) {
+      const header = document.getElementById('toastHeader');
+      const message = document.getElementById('toastMessage');
+      if (header) header.innerText = title;
+      if (message) message.innerText = msg;
+      const toast = document.getElementById('successToast');
+      if (toast) {
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 4000);
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // --- PWA SERVICE WORKER REGISTRATION ---
+    function registerServiceWorker() {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const pwaBtn = document.getElementById('pwaInstallBtn');
+        if (pwaBtn) pwaBtn.classList.remove('hidden');
+      });
+
+      if ('serviceWorker' in navigator) {
+        const swCode = `
+          self.addEventListener('install', e => self.skipWaiting());
+          self.addEventListener('activate', e => self.clients.claim());
+          self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => new Response('Offline'))));
+        `;
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+      }
+    }
+
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            document.getElementById('pwaInstallBtn').classList.add('hidden');
+          }
+          deferredPrompt = null;
+        });
+      }
+    }
+  </script>
+</body>
+</html>
