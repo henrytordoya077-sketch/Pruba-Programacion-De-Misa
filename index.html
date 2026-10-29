@@ -1365,3 +1365,23 @@
   </script>
 </body>
 </html>
+<script>
+  // Tu URL de Google Apps Script terminada en /exec
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygs8yWpQN7Dt-Q7tZSY3Ji0eqwL_gND7sVzfsiGX8a2jCR6BfiBzlploCrUZMJ-kY/exec";
+
+  // Función para registrar la misa y enviarla al Excel
+  async function registrarMisaEnGoogleSheets(datosMisa) {
+      try {
+          await fetch(SCRIPT_URL, {
+              method: "POST",
+              mode: "no-cors",
+              cache: "no-cache",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(datosMisa)
+          });
+          alert("¡Misa registrada y sincronizada en Google Sheets con éxito!");
+      } catch (error) {
+          console.error("Error al sincronizar:", error);
+      }
+  }
+</script>
