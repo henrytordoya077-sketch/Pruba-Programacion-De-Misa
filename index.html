@@ -998,9 +998,35 @@
     }
 
     function guardarMisaDigital() {
-      const fallecido = document.getElementById('misaFallecido').value || 'POR DEFINIR';
-      const ctto = document.getElementById('misaCtto').value || 'S/N';
-      const hora = document.getElementById('misaHora').value;
+      // 1. Recolectar todos los datos del formulario de misa
+      const datosMisa = {
+        comprobante: "MISA-2026-" + Math.floor(1000 + Math.random() * 9000),
+        fechaRegistro: new Date().toISOString().split('T')[0],
+        fechaMisa: document.getElementById('misaFecha').value,
+        horaMisa: document.getElementById('misaHora').value,
+        contrato: document.getElementById('misaCtto').value,
+        factura: document.getElementById('misaFactura').value,
+        difunto: document.getElementById('misaFallecido').value,
+        solicitante: document.getElementById('misaCliente').value,
+        telefono: document.getElementById('misaTelefono').value,
+        lugar: document.querySelector('input[name="lugarMisa"]:checked').value,
+        sector: document.getElementById('misaSector').value,
+        ubicacion: document.getElementById('misaUbicacion').value,
+        concepto: document.getElementById('serviceTitleDisplay').innerText,
+        monto: document.getElementById('misaSubtotalDisplay').innerText,
+        responsable: document.getElementById('misaResponsable').value,
+        sacerdote: document.getElementById('misaSacerdoteOption').value,
+        ramo: document.getElementById('misaRamo').checked ? "SI" : "NO",
+        estado: "Pendiente",
+        observaciones: document.getElementById('misaObservaciones').value
+      };
+
+      // 2. Enviar los datos automáticamente al Google Sheet vía Apps Script
+      enviarMisaAlExcel(datosMisa);
+
+      const fallecido = datosMisa.difunto;
+      const ctto = datosMisa.contrato;
+      const hora = datosMisa.horaMisa;
 
       misaProgrammed = true;
       closeMisaModal();
@@ -1025,7 +1051,7 @@
       const toastFallecido = document.getElementById('toastFallecido');
       const toastCtto = document.getElementById('toastCtto');
 
-      if (toastHeader) toastHeader.innerText = "¡Misa Agendada en Saffiro!";
+      if (toastHeader) toastHeader.innerText = "¡Misa Agendada y Sincronizada!";
       if (toastFallecido) toastFallecido.innerText = fallecido;
       if (toastCtto) toastCtto.innerText = ctto;
 
@@ -1038,352 +1064,23 @@
       }
     }
 
-    function previewAndPrintTicket() {
-      // Fill ticket fields from modal
-      document.getElementById('tktFecha').innerText = document.getElementById('misaFecha').value;
-      document.getElementById('tktHora').innerText = document.getElementById('misaHora').value;
-      
-      const lugar = document.querySelector('input[name="lugarMisa"]:checked').value;
-      document.getElementById('tktLugar').innerText = lugar;
-      document.getElementById('tktSector').innerText = document.getElementById('misaSector').value;
-      document.getElementById('tktUbicacion').innerText = document.getElementById('misaUbicacion').value;
-      document.getElementById('tktFallecido').innerText = document.getElementById('misaFallecido').value;
-      document.getElementById('tktCliente').innerText = document.getElementById('misaCliente').value;
-      document.getElementById('tktTel').innerText = document.getElementById('misaTelefono').value;
-      document.getElementById('tktCtto').innerText = document.getElementById('misaCtto').value;
-      document.getElementById('tktFactura').innerText = document.getElementById('misaFactura').value;
-      document.getElementById('tktResp').innerText = document.getElementById('misaResponsable').value;
-      document.getElementById('tktSac').innerText = document.getElementById('misaSacerdoteOption').value;
-      document.getElementById('tktRamo').innerText = document.getElementById('misaRamo').checked ? 'SÍ (INCLUIDO)' : 'NO';
-      document.getElementById('tktObs').innerText = document.getElementById('misaObservaciones').value || 'NINGUNA';
+    // --- CONEXIÓN AUTOMÁTICA CON GOOGLE SHEETS ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpLtrq-S58l_RSbtEzpya-HPPvYYgXYm5uaFBTR2K36mgcnHaArN_iQi4bf4YHyMd1/exec";
 
-      document.getElementById('ticketModal').classList.remove('hidden');
-    }
-
-    function closeTicketModal() {
-      document.getElementById('ticketModal').classList.add('hidden');
-    }
-
-    // --- DYNAMIC CALCULATIONS & PAYMENTS ---
-    function updateRowCuotas(input) {
-      const qty = parseInt(input.value) || 1;
-      const row = input.closest('tr');
-      const baseBs = 720.36;
-      const totalBs = (baseBs * qty).toFixed(2);
-      const totalUsd = (totalBs / 6.96).toFixed(2);
-
-      row.querySelector('.row-total-bs').innerText = totalBs;
-      row.querySelector('.row-total-usd').innerText = totalUsd;
-      row.querySelector('.item-checkbox').setAttribute('data-price-bs', totalBs);
-
-      recalculateTotals();
-    }
-
-    function updateMisaPrice() {
-      const qty = parseInt(document.getElementById('misaQtyInput').value) || 1;
-      const discount = parseFloat(document.getElementById('misaDiscountInput').value) || 0;
-      const unitPrice = parseFloat(document.getElementById('misaUnitPriceDisplay').innerText) || 150.00;
-      const subtotal = Math.max(0, (unitPrice * qty) - discount).toFixed(2);
-
-      document.getElementById('misaSubtotalDisplay').innerText = subtotal;
-      recalculateTotals();
-    }
-
-    function recalculateTotals() {
-      let totalBs = 0;
-
-      // Contract checkboxes
-      document.querySelectorAll('.item-checkbox:checked').forEach(cb => {
-        totalBs += parseFloat(cb.getAttribute('data-price-bs')) || 0;
-      });
-
-      // Extra Services
-      const misaSub = parseFloat(document.getElementById('misaSubtotalDisplay')?.innerText) || 0;
-      totalBs += misaSub;
-
-      // Additional Concept rows if any
-      document.querySelectorAll('.extra-service-price').forEach(el => {
-        totalBs += parseFloat(el.innerText) || 0;
-      });
-
-      const totalUsd = (totalBs / 6.96).toFixed(2);
-
-      document.getElementById('totalPayBs').innerText = `Bs. ${totalBs.toFixed(2)}`;
-      document.getElementById('totalPayUsd').innerText = `$us. ${totalUsd}`;
-
-      // Calculate paid amounts
-      let paidBs = 0;
-      document.querySelectorAll('.pay-amount-val').forEach(el => {
-        paidBs += parseFloat(el.getAttribute('data-bs')) || 0;
-      });
-
-      document.getElementById('totalPaidDisplay').innerText = `Bs. ${paidBs.toFixed(2)}`;
-
-      const balance = totalBs - paidBs;
-      if (balance > 0) {
-        document.getElementById('balanceLabel').innerText = 'Saldo pendiente:';
-        document.getElementById('balanceLabel').className = 'text-fuchsia-600';
-        document.getElementById('balanceDisplay').innerText = `Bs. ${balance.toFixed(2)}`;
-        document.getElementById('balanceDisplay').className = 'font-mono text-fuchsia-600 font-bold';
-      } else {
-        document.getElementById('balanceLabel').innerText = 'Cambio a devolver:';
-        document.getElementById('balanceLabel').className = 'text-emerald-700';
-        document.getElementById('balanceDisplay').innerText = `Bs. ${Math.abs(balance).toFixed(2)}`;
-        document.getElementById('balanceDisplay').className = 'font-mono text-emerald-700 font-bold';
-      }
-    }
-
-    function toggleSelectAllItems(masterCb) {
-      document.querySelectorAll('.item-checkbox').forEach(cb => {
-        cb.checked = masterCb.checked;
-      });
-      recalculateTotals();
-    }
-
-    function toggleQRPayment() {
-      isQREnabled = !isQREnabled;
-      const box = document.getElementById('qrBox');
-      const dot = document.getElementById('qrToggleDot');
-      const btn = document.getElementById('qrToggleBtn');
-
-      if (isQREnabled) {
-        box.classList.remove('hidden');
-        btn.classList.replace('bg-gray-300', 'bg-emerald-600');
-        dot.classList.replace('translate-x-0', 'translate-x-4');
-      } else {
-        box.classList.add('hidden');
-        btn.classList.replace('bg-emerald-600', 'bg-gray-300');
-        dot.classList.replace('translate-x-4', 'translate-x-0');
-      }
-    }
-
-    function removePaymentRow(rowId) {
-      const row = document.getElementById(rowId);
-      if (row) {
-        row.remove();
-        recalculateTotals();
-      }
-    }
-
-    function addNewPayment() {
-      const currency = document.getElementById('newPayCurrency').value;
-      const amount = parseFloat(document.getElementById('newPayAmount').value) || 0;
-      const method = document.getElementById('newPayMethod').value;
-      const bank = document.getElementById('newPayBank').value;
-
-      if (amount <= 0) {
-        showNotification('Monto Inválido', 'Ingrese un monto mayor a 0 para el abono.');
-        return;
-      }
-
-      const amountBs = currency === 'USD' ? (amount * 6.96).toFixed(2) : amount.toFixed(2);
-      const rowId = 'pay-row-' + Date.now();
-
-      const tbody = document.getElementById('paymentsListTable');
-      const tr = document.createElement('tr');
-      tr.id = rowId;
-      tr.innerHTML = `
-        <td class="py-2 font-bold text-gray-800 pay-amount-val" data-bs="${amountBs}">${amountBs}</td>
-        <td class="py-2 text-gray-600">${method}</td>
-        <td class="py-2 text-gray-600">${currency}</td>
-        <td class="py-2 text-gray-600">${bank}</td>
-        <td class="py-2 text-center text-gray-400">
-          <i class="fa-regular fa-trash-can cursor-pointer hover:text-red-500 p-1" onclick="removePaymentRow('${rowId}')"></i>
-        </td>
-      `;
-      tbody.appendChild(tr);
-
-      recalculateTotals();
-      showNotification('Abono Agregado', `Registrado abono por ${currency} ${amount.toFixed(2)}`);
-    }
-
-    // --- EXTRA PRODUCTS MANAGEMENT ---
-    function openAddProductModal() {
-      document.getElementById('addProductModal').classList.remove('hidden');
-    }
-
-    function updateNewServicePriceDefault() {
-      const val = document.getElementById('newServiceSelect').value;
-      const price = val.split('|')[1];
-      document.getElementById('newServicePrice').value = price;
-    }
-
-    function confirmAddExtraService() {
-      const val = document.getElementById('newServiceSelect').value;
-      const parts = val.split('|');
-      const name = parts[0];
-      const unitPrice = parseFloat(document.getElementById('newServicePrice').value) || 0;
-      const qty = parseInt(document.getElementById('newServiceQty').value) || 1;
-      const tieneRamo = parts[3] === 'true';
-      const subtotal = (unitPrice * qty).toFixed(2);
-
-      const tbody = document.getElementById('extraServicesTableBody');
-      const rowId = 'extra-prod-' + Date.now();
-
-      const isMisaType = name.toUpperCase().includes('MISA');
-
-      const tr = document.createElement('tr');
-      tr.id = rowId;
-      tr.setAttribute('data-tiene-ramo', tieneRamo ? 'true' : 'false');
-      tr.className = isMisaType ? "bg-emerald-50/40" : "";
-      tr.innerHTML = `
-        <td class="p-2 font-semibold text-gray-800 flex items-center space-x-2">
-          <i class="fa-solid ${isMisaType ? 'fa-church text-emerald-600' : 'fa-box text-emerald-600'}"></i>
-          <span>${name}</span>
-        </td>
-        <td class="p-2 text-center font-mono">0.00</td>
-        <td class="p-2 text-center font-mono">${qty}</td>
-        <td class="p-2 text-right font-mono">${unitPrice.toFixed(2)}</td>
-        <td class="p-2 text-right font-mono font-bold text-emerald-700 extra-service-price">${subtotal}</td>
-        <td class="p-2 text-center font-bold text-gray-600">BOL</td>
-        <td class="p-2 text-center" id="status-${rowId}">
-          <span class="bg-${isMisaType ? 'amber' : 'blue'}-100 text-${isMisaType ? 'amber' : 'blue'}-800 px-2 py-0.5 rounded-full font-bold text-[10px]">
-            ${isMisaType ? 'Pendiente' : 'Agregado'}
-          </span>
-        </td>
-        <td class="p-2 text-center space-x-1">
-          ${isMisaType ? `
-            <button onclick="openMisaModalFor('${rowId}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded shadow-sm font-semibold text-[11px] transition inline-flex items-center space-x-1">
-              <i class="fa-solid fa-calendar-plus"></i>
-              <span>Programar</span>
-            </button>
-          ` : ''}
-          <button onclick="deleteExtraService('${rowId}')" class="text-gray-400 hover:text-red-500 p-1"><i class="fa-regular fa-trash-can"></i></button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-
-      closeModal('addProductModal');
-      recalculateTotals();
-      showNotification('Servicio Adicionado', `${name} agregado exitosamente.`);
-    }
-
-    function deleteExtraService(rowId) {
-      const row = document.getElementById(rowId);
-      if (row) {
-        row.remove();
-        recalculateTotals();
-      }
-    }
-
-    function openAddContractModal() {
-      openModal('navModal', 'Vincular Contrato', 'Ingrese el número de contrato o búsqueda por CI para importar parcelas o servicios pendientes.');
-    }
-
-    // --- FINALIZE TRANSACTION & RESET ---
-    function processFinalizeTransaction() {
-      let paidBs = 0;
-      document.querySelectorAll('.pay-amount-val').forEach(el => {
-        paidBs += parseFloat(el.getAttribute('data-bs')) || 0;
-      });
-
-      if (paidBs <= 0) {
-        showNotification('Aviso de Cobro', 'Por favor registre al menos un abono de pago antes de finalizar.');
-        return;
-      }
-
-      openModal('navModal', '¡Transacción Procesada!', `
-        <div class="text-center py-2 space-y-2">
-          <i class="fa-solid fa-circle-check text-4xl text-emerald-600"></i>
-          <p class="font-bold text-sm">Factura Digital N° 798 emitida correctamente.</p>
-          <p>Comprobante de Misa vinculado al expediente de ${currentClient.name}.</p>
-          <button onclick="previewAndPrintTicket()" class="mt-2 bg-emerald-700 text-white px-4 py-1.5 rounded font-bold text-xs"><i class="fa-solid fa-print"></i> Imprimir Comprobante Oficial</button>
-        </div>
-      `);
-    }
-
-    function resetTransaction() {
-      if (confirm("¿Desea reiniciar el formulario e iniciar un nuevo cobro?")) {
-        location.reload();
-      }
-    }
-
-    // --- UTILITY MODALS & NOTIFICATIONS ---
-    function openModal(modalId, title, bodyHtml) {
-      if (title) document.getElementById('navModalTitle').innerText = title;
-      if (bodyHtml) document.getElementById('navModalBody').innerHTML = bodyHtml;
-      document.getElementById(modalId).classList.remove('hidden');
-    }
-
-    function closeModal(modalId) {
-      document.getElementById(modalId).classList.add('hidden');
-    }
-
-    function showNotification(title, msg) {
-      const header = document.getElementById('toastHeader');
-      const message = document.getElementById('toastMessage');
-      if (header) header.innerText = title;
-      if (message) message.innerText = msg;
-      const toast = document.getElementById('successToast');
-      if (toast) {
-        toast.classList.remove('hidden');
-        setTimeout(() => {
-          toast.classList.add('hidden');
-        }, 4000);
-      }
-    }
-
-    function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-      }
-    }
-
-    // --- PWA SERVICE WORKER REGISTRATION ---
-    function registerServiceWorker() {
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        const pwaBtn = document.getElementById('pwaInstallBtn');
-        if (pwaBtn) pwaBtn.classList.remove('hidden');
-      });
-
-      if ('serviceWorker' in navigator) {
-        const swCode = `
-          self.addEventListener('install', e => self.skipWaiting());
-          self.addEventListener('activate', e => self.clients.claim());
-          self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => new Response('Offline'))));
-        `;
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
-      }
-    }
-
-    function installPWA() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-          if (choiceResult.outcome === 'accepted') {
-            document.getElementById('pwaInstallBtn').classList.add('hidden');
-          }
-          deferredPrompt = null;
-        });
-      }
+    async function enviarMisaAlExcel(datosMisa) {
+        try {
+            await fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                cache: "no-cache",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(datosMisa)
+            });
+            console.log("Datos enviados al Excel correctamente.");
+        } catch (error) {
+            console.error("Error al sincronizar con el Excel:", error);
+        }
     }
   </script>
-</body>
-  }
-  }
-</script>
-<script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpLtrq-S58l_RSbtEzpya-HPPvYYgXYm5uaFBTR2K36mgcnHaArN_iQi4bf4YHyMd1/exec";
-
-  async function registrarMisaEnGoogleSheets(datosMisa) {
-      try {
-          await fetch(SCRIPT_URL, {
-              method: "POST",
-              mode: "no-cors",
-              cache: "no-cache",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(datosMisa)
-          });
-          alert("¡Misa registrada y sincronizada en Google Sheets con éxito!");
-      } catch (error) {
-          console.error("Error al sincronizar:", error);
-      }
-  }
-</script>
 </body>
 </html>
