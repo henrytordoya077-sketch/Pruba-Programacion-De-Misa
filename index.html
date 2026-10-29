@@ -1364,9 +1364,15 @@
     }
   </script>
 </body>
-</html>
+  }
+  }
+</script>
+
+<!-- BLOQUE DE CONEXION CON GOOGLE SHEETS -->
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygs8yWpQN7Dt-Q7tZSY3Ji0eqwL_gND7sVzfsiGX8a2jCR6BfiBzlploCrUZMJ-kY/exec";
+  // Tu URL real de Google Apps Script terminada en /exec
+  const SCRIPT_URL = "https://script.google.com/macros/s/TU_URL_REAL_AQUI/exec";
+
   async function registrarMisaEnGoogleSheets(datosMisa) {
       try {
           await fetch(SCRIPT_URL, {
@@ -1382,5 +1388,7 @@
       }
   }
 </script>
+
 </body>
+</html>
 </html>
